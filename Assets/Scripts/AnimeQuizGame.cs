@@ -1,7 +1,8 @@
 using UnityEngine;
-using UnityEngine.UI;
+using TMPro;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class AnimeQuizGame : MonoBehaviour
 {
@@ -19,6 +20,8 @@ public class AnimeQuizGame : MonoBehaviour
     public int maxLives = 3;
     public int hintCost = 100;
     public int maxQuestions = 50;
+    public string nextSceneName = "NextScene";
+    public bool isFinalScene = false; // Флаг для определения финальной сцены
 
     [Header("Sound Settings")]
     public AudioClip correctAnswerSound;
@@ -30,15 +33,18 @@ public class AnimeQuizGame : MonoBehaviour
     [Header("UI References")]
     public Image questionImage;
     public Button[] answerButtons;
-    public Text coinsText;
+    public TextMeshProUGUI coinsText;
     public GameObject gameOverPanel;
-    public Text finalCoinsText;
-    public Text questionCounterText;
-    public Text livesText;
+    public TextMeshProUGUI[] finalCoinTexts; // Массив текстовых элементов для отображения финальных монет
+    public TextMeshProUGUI questionCounterText;
+    public TextMeshProUGUI livesText;
     public GameObject[] lifeIcons;
     public Button hintButton;
     public Color disabledAnswerColor = new Color(0.3f, 0.3f, 0.3f, 0.5f);
-    public GameObject gameCompletedPanel;
+    public GameObject victoryPanel;
+    public Button continueButton;
+    public Button restartButton;
+    public Button menuButton;
 
     private List<AnimeQuestion> unansweredQuestions;
     private AnimeQuestion currentQuestion;
@@ -49,8 +55,38 @@ public class AnimeQuizGame : MonoBehaviour
     private int currentLives;
     private List<int> disabledAnswerIndices = new List<int>();
 
+    void Awake()
+    {
+        DontDestroyOnLoad(gameObject);
+    }
+
     void Start()
     {
+        InitializeGame();
+        SetupUIForScene();
+    }
+
+    void SetupUIForScene()
+    {
+        if (isFinalScene && continueButton != null)
+        {
+            continueButton.gameObject.SetActive(false);
+        }
+
+        if (restartButton != null) restartButton.gameObject.SetActive(true);
+        if (menuButton != null) menuButton.gameObject.SetActive(true);
+    }
+
+    void InitializeGame()
+    {
+        // Проверка всех необходимых ссылок
+        if (questionImage == null) Debug.LogError("QuestionImage reference is missing!");
+        if (answerButtons == null || answerButtons.Length == 0) Debug.LogError("Answer Buttons are not assigned!");
+        if (coinsText == null) Debug.LogError("Coins Text reference is missing!");
+        if (gameOverPanel == null) Debug.LogError("Game Over Panel reference is missing!");
+        if (victoryPanel == null) Debug.LogError("Victory Panel reference is missing!");
+
+        // Инициализация аудио
         soundEffectsSource = gameObject.AddComponent<AudioSource>();
         musicSource = gameObject.AddComponent<AudioSource>();
 
@@ -61,63 +97,88 @@ public class AnimeQuizGame : MonoBehaviour
 
         soundEffectsSource.volume = soundEffectsVolume;
 
+        // Проверка вопросов
         if (questions.Count < 4)
         {
-            Debug.LogError("Недостаточно вопросов! Нужно минимум 4.");
+            Debug.LogError("Not enough questions! Minimum 4 required.");
             return;
         }
 
+        // Инициализация игры
         unansweredQuestions = new List<AnimeQuestion>(questions);
         totalQuestions = Mathf.Min(questions.Count, maxQuestions);
         questionsAnswered = 0;
         currentLives = maxLives;
 
+        // Настройка UI
         UpdateQuestionCounter();
         UpdateLivesUI();
-        SetRandomQuestion();
         UpdateCoinsUI();
+
         gameOverPanel.SetActive(false);
-        gameCompletedPanel.SetActive(false);
+        victoryPanel.SetActive(false);
 
+        // Назначение обработчиков кнопок
         hintButton.onClick.AddListener(UseHint);
-        UpdateHintButton();
-    }
+        if (continueButton != null) continueButton.onClick.AddListener(ContinueToNextScene);
+        if (restartButton != null) restartButton.onClick.AddListener(RestartGame);
+        if (menuButton != null) menuButton.onClick.AddListener(ReturnToMenu);
 
-    void Awake()
-    {
-        DontDestroyOnLoad(gameObject);
+        UpdateHintButton();
+        UpdateContinueButton();
+
+        // Начало игры final
+        SetRandomQuestion();
     }
 
     void SetRandomQuestion()
     {
+        if (questionImage == null) return;
+
         disabledAnswerIndices.Clear();
 
-        if (unansweredQuestions.Count == 0 || currentLives <= 0 || questionsAnswered >= maxQuestions)
+        // Проверка условий окончания игры
+        if (unansweredQuestions.Count == 0 || questionsAnswered >= maxQuestions)
         {
-            EndGame();
+            EndGame(true); // Победа - все вопросы отвечены
             return;
         }
 
+        if (currentLives <= 0)
+        {
+            EndGame(false); // Поражение - закончились жизни
+            return;
+        }
+
+        // Выбор случайного вопроса
         int randomIndex = Random.Range(0, unansweredQuestions.Count);
         currentQuestion = unansweredQuestions[randomIndex];
         unansweredQuestions.RemoveAt(randomIndex);
 
-        questionImage.sprite = currentQuestion.image;
+        // Установка изображения вопроса
+        questionImage.sprite = currentQuestion?.image;
 
+        // Подготовка вариантов ответов
         List<string> allAnswers = new List<string>(currentQuestion.wrongAnswers);
         allAnswers.Add(currentQuestion.correctAnswer);
 
+        // Перемешивание ответов
         for (int i = 0; i < allAnswers.Count; i++)
         {
-            string temp = allAnswers[i];
             int random = Random.Range(i, allAnswers.Count);
+            string temp = allAnswers[i];
             allAnswers[i] = allAnswers[random];
             allAnswers[random] = temp;
         }
 
+        // Настройка кнопок ответов
         for (int i = 0; i < answerButtons.Length; i++)
         {
-            answerButtons[i].GetComponentInChildren<Text>().text = allAnswers[i];
+            if (answerButtons[i] == null) continue;
+
+            var buttonText = answerButtons[i].GetComponentInChildren<TextMeshProUGUI>();
+            if (buttonText != null) buttonText.text = i < allAnswers.Count ? allAnswers[i] : "N/A";
+
             answerButtons[i].onClick.RemoveAllListeners();
             answerButtons[i].interactable = true;
 
@@ -125,8 +186,11 @@ public class AnimeQuizGame : MonoBehaviour
             colors.normalColor = Color.white;
             answerButtons[i].colors = colors;
 
-            string answer = allAnswers[i];
-            answerButtons[i].onClick.AddListener(() => CheckAnswer(answer));
+            if (i < allAnswers.Count)
+            {
+                string answer = allAnswers[i];
+                answerButtons[i].onClick.AddListener(() => CheckAnswer(answer));
+            }
         }
 
         UpdateHintButton();
@@ -136,20 +200,23 @@ public class AnimeQuizGame : MonoBehaviour
     {
         if (selectedAnswer == currentQuestion.correctAnswer)
         {
-            CoinManager.Instance.AddCoins(coinsPerCorrectAnswer);
+            // Правильный ответ
+            if (CoinManager.Instance != null)
+            {
+                CoinManager.Instance.AddCoins(coinsPerCorrectAnswer);
+            }
             PlaySound(correctAnswerSound);
-            Debug.Log($"Правильно! +{coinsPerCorrectAnswer} монет");
         }
         else
         {
+            // Неправильный ответ
             currentLives--;
             UpdateLivesUI();
             PlaySound(wrongAnswerSound);
-            Debug.Log($"Неправильно! Правильный ответ: {currentQuestion.correctAnswer}");
 
             if (currentLives <= 0)
             {
-                EndGame();
+                EndGame(false); // Поражение
                 return;
             }
         }
@@ -158,9 +225,13 @@ public class AnimeQuizGame : MonoBehaviour
         UpdateQuestionCounter();
         UpdateCoinsUI();
 
-        if (questionsAnswered >= maxQuestions)
+        if (questionsAnswered >= maxQuestions || unansweredQuestions.Count == 0)
         {
-            EndGame();
+            EndGame(true); // Победа - все вопросы отвечены
+        }
+        else if (currentLives <= 0)
+        {
+            EndGame(false); // Поражение
         }
         else
         {
@@ -168,53 +239,92 @@ public class AnimeQuizGame : MonoBehaviour
         }
     }
 
-    void UseHint()
+    void EndGame(bool isVictory)
     {
-        if (CoinManager.Instance.SpendCoins(hintCost))
+        if (isVictory)
         {
-            List<int> wrongAnswerIndices = new List<int>();
-            for (int i = 0; i < answerButtons.Length; i++)
+            victoryPanel.SetActive(true);
+            int finalCoins = CoinManager.Instance?.Coins ?? 0;
+
+            // Обновляем все текстовые элементы в массиве finalCoinTexts
+            foreach (var text in finalCoinTexts)
             {
-                if (answerButtons[i].GetComponentInChildren<Text>().text != currentQuestion.correctAnswer &&
-                    !disabledAnswerIndices.Contains(i))
+                if (text != null)
                 {
-                    wrongAnswerIndices.Add(i);
+                    text.text = $"Заработанные монеты: {finalCoins}";
                 }
             }
-
-            int hintsToShow = Mathf.Min(2, wrongAnswerIndices.Count);
-            for (int i = 0; i < hintsToShow; i++)
-            {
-                int randomIndex = Random.Range(0, wrongAnswerIndices.Count);
-                int buttonIndex = wrongAnswerIndices[randomIndex];
-
-                answerButtons[buttonIndex].interactable = false;
-                var colors = answerButtons[buttonIndex].colors;
-                colors.disabledColor = disabledAnswerColor;
-                answerButtons[buttonIndex].colors = colors;
-
-                disabledAnswerIndices.Add(buttonIndex);
-                wrongAnswerIndices.RemoveAt(randomIndex);
-            }
-
-            UpdateCoinsUI();
-            UpdateHintButton();
         }
         else
         {
-            Debug.Log("Недостаточно монет для подсказки!");
+            gameOverPanel.SetActive(true);
+            int finalCoins = CoinManager.Instance?.Coins ?? 0;
+
+            if (finalCoinTexts.Length > 0 && finalCoinTexts[0] != null)
+            {
+                finalCoinTexts[0].text = $"Заработанные монеты: {finalCoins}";
+            }
         }
+
+        UpdateContinueButton();
+    }
+
+    // Остальные методы остаются без изменений
+    void UseHint()
+    {
+        if (CoinManager.Instance == null || !CoinManager.Instance.SpendCoins(hintCost))
+        {
+            Debug.Log("Not enough coins for hint!");
+            return;
+        }
+
+        List<int> wrongAnswerIndices = new List<int>();
+        for (int i = 0; i < answerButtons.Length; i++)
+        {
+            var buttonText = answerButtons[i].GetComponentInChildren<TextMeshProUGUI>();
+            if (buttonText != null && buttonText.text != currentQuestion.correctAnswer &&
+                !disabledAnswerIndices.Contains(i))
+            {
+                wrongAnswerIndices.Add(i);
+            }
+        }
+
+        int hintsToShow = Mathf.Min(2, wrongAnswerIndices.Count);
+        for (int i = 0; i < hintsToShow; i++)
+        {
+            int randomIndex = Random.Range(0, wrongAnswerIndices.Count);
+            int buttonIndex = wrongAnswerIndices[randomIndex];
+
+            answerButtons[buttonIndex].interactable = false;
+            var colors = answerButtons[buttonIndex].colors;
+            colors.disabledColor = disabledAnswerColor;
+            answerButtons[buttonIndex].colors = colors;
+
+            disabledAnswerIndices.Add(buttonIndex);
+            wrongAnswerIndices.RemoveAt(randomIndex);
+        }
+
+        UpdateCoinsUI();
+        UpdateHintButton();
     }
 
     void UpdateHintButton()
     {
-        hintButton.interactable = CoinManager.Instance.Coins >= hintCost &&
-                               disabledAnswerIndices.Count < answerButtons.Length - 2;
+        if (hintButton == null) return;
+
+        bool canUseHint = CoinManager.Instance != null &&
+                         CoinManager.Instance.Coins >= hintCost &&
+                         disabledAnswerIndices.Count < answerButtons.Length - 2;
+
+        hintButton.interactable = canUseHint;
     }
 
     void UpdateLivesUI()
     {
-        livesText.text = $"Жизни: {currentLives}/{maxLives}";
+        if (livesText != null)
+        {
+            livesText.text = $"Жизни: {currentLives}/{maxLives}";
+        }
 
         if (lifeIcons != null && lifeIcons.Length >= maxLives)
         {
@@ -230,32 +340,43 @@ public class AnimeQuizGame : MonoBehaviour
 
     void UpdateCoinsUI()
     {
-        coinsText.text = $"Монеты: {CoinManager.Instance.Coins}";
+        if (coinsText != null)
+        {
+            coinsText.text = $"Монеты: {CoinManager.Instance?.Coins ?? 0}";
+        }
         UpdateHintButton();
     }
 
     void UpdateQuestionCounter()
     {
-        questionCounterText.text = $"Вопрос: {questionsAnswered + 1}/{totalQuestions}";
+        if (questionCounterText != null)
+        {
+            questionCounterText.text = $"Вопрос: {questionsAnswered + 1}/{totalQuestions}";
+        }
     }
 
-    void EndGame()
+    void UpdateContinueButton()
     {
-        if (questionsAnswered >= maxQuestions)
+        if (continueButton == null) return;
+
+        continueButton.interactable = currentLives > 0;
+
+        var colors = continueButton.colors;
+        colors.disabledColor = Color.gray;
+        continueButton.colors = colors;
+    }
+
+    void ContinueToNextScene()
+    {
+        if (currentLives > 0 && !string.IsNullOrEmpty(nextSceneName) && !isFinalScene)
         {
-            gameCompletedPanel.SetActive(true);
-            finalCoinsText.text = $"Финальные монеты: {CoinManager.Instance.Coins}";
-        }
-        else
-        {
-            gameOverPanel.SetActive(true);
-            finalCoinsText.text = $"Финальные монеты: {CoinManager.Instance.Coins}";
+            SceneManager.LoadScene(nextSceneName);
         }
     }
 
     void PlaySound(AudioClip clip)
     {
-        if (clip != null)
+        if (clip != null && soundEffectsSource != null)
         {
             soundEffectsSource.PlayOneShot(clip);
         }

@@ -13,7 +13,7 @@ PlayerSettings:
   useOnDemandResources: 0
   accelerometerFrequency: 60
   companyName: Blink Studios
-  productName: "\u0423\u0433\u0430\u0434\u0430\u0439 \u0430\u043D\u0438\u043C\u0435"
+  productName: "AniQuiz: \u0423\u0433\u0430\u0434\u0430\u0439 \u0430\u043D\u0438\u043C\u0435"
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
@@ -670,18 +670,18 @@ PlayerSettings:
   webGLMemoryGeometricGrowthCap: 96
   webGLPowerPreference: 2
   scriptingDefineSymbols:
-    Android: PLUGIN_YG_2;YandexGamesPlatform_yg;TMP_YG2
-    LinuxHeadlessSimulation: PLUGIN_YG_2;YandexGamesPlatform_yg;TMP_YG2
-    Nintendo Switch: PLUGIN_YG_2;YandexGamesPlatform_yg;TMP_YG2
-    PS4: PLUGIN_YG_2;YandexGamesPlatform_yg;TMP_YG2
-    PS5: PLUGIN_YG_2;YandexGamesPlatform_yg;TMP_YG2
-    Standalone: PLUGIN_YG_2;TMP_YG2;YandexGamesPlatform_yg
-    VisionOS: PLUGIN_YG_2;YandexGamesPlatform_yg;TMP_YG2
-    WebGL: PLUGIN_YG_2;TMP_YG2;RU_YG2;YandexGamesPlatform_yg
-    Windows Store Apps: PLUGIN_YG_2;YandexGamesPlatform_yg;TMP_YG2
-    XboxOne: PLUGIN_YG_2;YandexGamesPlatform_yg;TMP_YG2
-    iPhone: PLUGIN_YG_2;YandexGamesPlatform_yg;TMP_YG2
-    tvOS: PLUGIN_YG_2;YandexGamesPlatform_yg;TMP_YG2
+    Android: PLUGIN_YG_2;YandexGamesPlatform_yg;TMP_YG2;Localization_yg
+    LinuxHeadlessSimulation: PLUGIN_YG_2;YandexGamesPlatform_yg;TMP_YG2;Localization_yg
+    Nintendo Switch: PLUGIN_YG_2;YandexGamesPlatform_yg;TMP_YG2;Localization_yg
+    PS4: PLUGIN_YG_2;YandexGamesPlatform_yg;TMP_YG2;Localization_yg
+    PS5: PLUGIN_YG_2;YandexGamesPlatform_yg;TMP_YG2;Localization_yg
+    Standalone: PLUGIN_YG_2;TMP_YG2;YandexGamesPlatform_yg;Localization_yg
+    VisionOS: PLUGIN_YG_2;YandexGamesPlatform_yg;TMP_YG2;Localization_yg
+    WebGL: PLUGIN_YG_2;TMP_YG2;RU_YG2;YandexGamesPlatform_yg;Localization_yg
+    Windows Store Apps: PLUGIN_YG_2;YandexGamesPlatform_yg;TMP_YG2;Localization_yg
+    XboxOne: PLUGIN_YG_2;YandexGamesPlatform_yg;TMP_YG2;Localization_yg
+    iPhone: PLUGIN_YG_2;YandexGamesPlatform_yg;TMP_YG2;Localization_yg
+    tvOS: PLUGIN_YG_2;YandexGamesPlatform_yg;TMP_YG2;Localization_yg
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend: {}

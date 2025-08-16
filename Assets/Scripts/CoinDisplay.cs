@@ -1,9 +1,9 @@
 using UnityEngine;
-using UnityEngine.UI; // Добавьте эту директиву
+using TMPro;
 
-public class CoinDisplay : MonoBehaviour // Измените имя класса
+public class CoinDisplay : MonoBehaviour
 {
-    public Text coinsText; // Теперь это будет ссылаться на UnityEngine.UI.Text
+    public TextMeshProUGUI coinsText;
 
     void Start()
     {

@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efa747916aa66674d96ea40ca8a480b2, type: 3}
   m_Name: SettingsYG2
   m_EditorClassIdentifier: 
+  Localization:
+    setLanguageMod: 1
   Basic:
     platform: {fileID: 11400000, guid: c2a303d33a9fd394bae4c4b88b9a1c44, type: 2}
     autoApplySettings: 1
@@ -21,7 +23,7 @@ MonoBehaviour:
     logInEditor: 1
     archivingBuild: 1
     syncInitSDK: 1
-    loadSceneIfSDKLate: 0
+    loadSceneIfSDKLate: 1
     loadSceneIndex: 0
     simulationLoadScene: 0
   Simulation:
@@ -49,7 +51,10 @@ MonoBehaviour:
       color2: {r: 1, g: 0.831, b: 0.149, a: 0.7}
     fixedAspectRatio: 0
     aspectRatio: 16/9
+    disableForMobile: 1
     fillBackground: 0
+    imageBackground: 0
+    imageName: background.jpg
     gradientBackgroundByAspectRatio:
       radial: 0
       angleInclination: 140
